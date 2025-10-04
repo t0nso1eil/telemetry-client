@@ -1,39 +1,35 @@
 const F1TelemetryClient = require('./telemetry.client');
 
-async function startApp() {
-    console.log('🚦 Starting F1 Telemetry Client Test...');
-
+async function main() {
     const client = new F1TelemetryClient();
 
-    try {
-        // Подписываемся на минимальный набор потоков для теста
-        await client.start(["Heartbeat", "TimingData", "SessionInfo"]);
-
-        console.log('\n📡 Listening for F1 telemetry data...');
-        console.log('Press Ctrl+C to stop\n');
-
-    } catch (error) {
-        console.error('❌ Failed to start:', error.message);
-        process.exit(1);
-    }
-
-    // Обработка завершения
-    process.on('SIGINT', () => {
-        console.log('\n🛑 Shutting down F1 Telemetry Client...');
-        client.stop();
-        process.exit(0);
+    // общий апдейт
+    client.on('update', ({ state }) => {
+        console.log("🏎️ Current lap:", state.lapCount?.CurrentLap || "N/A");
     });
 
-    process.on('SIGTERM', () => {
-        console.log('\n🔚 Terminating F1 Telemetry Client...');
-        client.stop();
-        process.exit(0);
+    // конкретный поток
+    client.on('TimingData', (data) => {
+        if (data.Lines) {
+            Object.values(data.Lines).forEach((driver) => {
+                if (driver?.Position === 1) {
+                    console.log("🥇 Leader:", driver.DriverId, driver.KPH, "kph");
+                }
+            });
+        }
     });
+
+    client.on('WeatherData', (weather) => {
+        console.log("🌦️ Weather:", weather?.AirTemp, "°C, Rain?", weather?.Raining);
+    });
+
+    client.on('RaceControlMessages', (msg) => {
+        console.log("📢 Race Control:", msg.Message);
+    });
+
+    await client.start(["Heartbeat", "DriverList", "TimingData", "SessionInfo","SessionStatus","TeamRadio", "WeatherData", "RaceControlMessages","TimingAppData","TimingStats","TrackStatus",
+                       "Position.z","CarData.z", "SessionData", "TopThree", "LapCount"]);
 }
 
-// Проверяем, запущен ли файл напрямую
-if (require.main === module) {
-    startApp();
-}
+main();
 
-module.exports = startApp;
