@@ -6,10 +6,34 @@ async function startApp() {
     const client = new F1TelemetryClient();
 
     try {
-        // Подписываемся на минимальный набор потоков для теста
-        await client.start(["Heartbeat", "TimingData", "SessionInfo"]);
+        // Подписываемся на ВСЕ доступные потоки данных
+        const allStreams = [
+            "Heartbeat",
+            "TimingData",
+            "TimingAppData",
+            "SessionInfo",
+            "SessionData",
+            "TrackData",
+            "DriverList",
+            "WeatherData",
+            "RaceControlMessages",
+            "TimingStats",
+            "LapCount",
+            "PitLaneTime",
+            "TeamRadio",
+            "CarData",
+            "Position",
+            "ExtrapolatedClock",
+            "TopThree",
+            "RcmSeries",
+            "TimingPrerequisites",
+            "GameState"
+        ];
 
-        console.log('\n📡 Listening for F1 telemetry data...');
+        await client.start(allStreams);
+
+        console.log('\n📡 Listening for ALL F1 telemetry data streams...');
+        console.log('✅ Subscribed to:', allStreams.length, 'different data streams');
         console.log('Press Ctrl+C to stop\n');
 
     } catch (error) {
